@@ -1,0 +1,100 @@
+services:
+    app:
+        container_name: SINOD_APP
+        build: ./docker/php
+        volumes: ['./backend:/var/www/html']
+        depends_on:
+            mysql:
+                condition: service_healthy
+        networks: [sinodtech]
+
+    scheduler:
+        container_name: SINOD_SCHEDULER
+        build: ./docker/php
+        volumes: ['./backend:/var/www/html']
+        command: php artisan schedule:work
+        depends_on:
+            mysql:
+                condition: service_healthy
+            app:
+                condition: service_started
+        networks: [sinodtech]
+
+    queue:
+        container_name: SINOD_QUEUE
+        build: ./docker/php
+        volumes: ['./backend:/var/www/html']
+        command: php artisan queue:work
+        depends_on:
+            mysql:
+                condition: service_healthy
+            app:
+                condition: service_started
+        networks: [sinodtech]
+
+    nginx:
+        container_name: SINOD_NGINX
+        build: ./docker/nginx
+        ports: ['${BACKEND_PORT}:80']
+        volumes: ['./backend:/var/www/html']
+        depends_on: [app]
+        networks: [sinodtech]
+
+    mysql:
+        container_name: SINOD_MYSQL
+        image: mysql:8
+        environment:
+            MYSQL_DATABASE: ${DB_DATABASE}
+            MYSQL_USER: ${DB_USERNAME}
+            MYSQL_PASSWORD: ${DB_PASSWORD}
+            MYSQL_ROOT_PASSWORD: secret
+        ports: ['3306:3306']
+        volumes: ['mysql_data:/var/lib/mysql']
+        healthcheck:
+            test:
+                [
+                    'CMD',
+                    'mysqladmin',
+                    'ping',
+                    '-h',
+                    'localhost',
+                    '-u',
+                    'root',
+                    '-psecret',
+                ]
+            interval: 5s
+            timeout: 5s
+            retries: 10
+        networks: [sinodtech]
+
+    phpmyadmin:
+        container_name: SINOD_PHPMYADMIN
+        image: phpmyadmin:5
+        environment:
+            PMA_HOST: mysql
+            PMA_USER: ${DB_USERNAME}
+            PMA_PASSWORD: ${DB_PASSWORD}
+        ports: ['${PHPMYADMIN_PORT}:80']
+        depends_on:
+            mysql:
+                condition: service_healthy
+        networks: [sinodtech]
+
+    frontend:
+        container_name: SINOD_FRONTEND
+        build:
+            context: .
+            dockerfile: docker/node/Dockerfile
+        volumes:
+            - ./frontend:/app
+            - /app/node_modules
+        ports: ['${FRONTEND_PORT}:5173']
+        command: npm run dev -- --host
+        networks: [sinodtech]
+
+volumes:
+    mysql_data:
+
+networks:
+    sinodtech:
+        driver: bridge
