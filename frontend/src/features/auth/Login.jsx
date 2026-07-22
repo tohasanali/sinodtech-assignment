@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { Alert, BrandMark, Button, Card, Field } from '../../components/ui'
 
 export default function Login() {
   const { login } = useAuth()
@@ -30,8 +31,9 @@ export default function Login() {
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="mb-6 text-center">
+      <Card className="w-full max-w-sm">
+        <div className="mb-6 flex flex-col items-center text-center">
+          <BrandMark className="mb-3 h-11 w-11 text-base" />
           <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">SinodTech</h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Sign in to your account
@@ -39,57 +41,33 @@ export default function Login() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label
-              htmlFor="email"
-              className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300"
-            >
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              required
-              autoComplete="email"
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-            />
-          </div>
+          <Field
+            id="email"
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            required
+            autoComplete="email"
+          />
 
-          <div>
-            <label
-              htmlFor="password"
-              className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300"
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-              autoComplete="current-password"
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-            />
-          </div>
+          <Field
+            id="password"
+            label="Password"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            required
+            autoComplete="current-password"
+          />
 
-          {error && (
-            <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-              {error}
-            </p>
-          )}
+          {error && <Alert variant="error">{error}</Alert>}
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-          >
+          <Button type="submit" disabled={submitting} className="w-full">
             {submitting ? 'Logging in...' : 'Log in'}
-          </button>
+          </Button>
         </form>
-      </div>
+      </Card>
     </div>
   )
 }
