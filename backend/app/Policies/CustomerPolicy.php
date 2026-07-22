@@ -17,6 +17,21 @@ class CustomerPolicy
         return $user->isStaff();
     }
 
+    public function create(User $user): bool
+    {
+        return $user->isAdmin();
+    }
+
+    public function update(User $user, Customer $customer): bool
+    {
+        return $user->isAdmin();
+    }
+
+    public function delete(User $user, Customer $customer): bool
+    {
+        return $user->isAdmin();
+    }
+
     public function assign(User $user, Customer $customer): bool
     {
         return $user->isAdmin();

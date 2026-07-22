@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin\BranchController;
 use App\Http\Controllers\Api\V1\Admin\CustomerController;
 use App\Http\Controllers\Api\V1\Admin\EmployeeController;
 use App\Http\Controllers\Api\V1\Admin\ProductController as AdminProductController;
@@ -8,6 +9,7 @@ use App\Http\Controllers\Api\V1\Admin\StockController;
 use App\Http\Controllers\Api\V1\Admin\UserController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Public\ProductController as PublicProductController;
+use App\Models\Branch;
 use App\Models\Customer;
 use App\Models\EmployeeKpi;
 use App\Models\Product;
@@ -54,15 +56,26 @@ Route::prefix('v1')->group(function () {
         Route::patch('/admin/products/{product}/branches/{branch}/stock', [StockController::class, 'adjust'])
             ->middleware('can:update,product');
 
+        Route::get('/admin/branches', [BranchController::class, 'index'])
+            ->middleware('can:viewAny,'.Branch::class);
+
         Route::get('/admin/sales', [SaleController::class, 'index'])
             ->middleware('can:viewAny,'.Sale::class);
         Route::post('/admin/sales', [SaleController::class, 'store'])
             ->middleware('can:create,'.Sale::class);
 
+        Route::get('/admin/customers', [CustomerController::class, 'index'])
+            ->middleware('can:viewAny,'.Customer::class);
+        Route::post('/admin/customers', [CustomerController::class, 'store'])
+            ->middleware('can:create,'.Customer::class);
         Route::get('/admin/customers/lost', [CustomerController::class, 'lost'])
             ->middleware('can:viewAny,'.Customer::class);
         Route::get('/admin/customers/{customer}', [CustomerController::class, 'show'])
             ->middleware('can:view,customer');
+        Route::match(['put', 'patch'], '/admin/customers/{customer}', [CustomerController::class, 'update'])
+            ->middleware('can:update,customer');
+        Route::delete('/admin/customers/{customer}', [CustomerController::class, 'destroy'])
+            ->middleware('can:delete,customer');
         Route::patch('/admin/customers/{customer}/assign', [CustomerController::class, 'assign'])
             ->middleware('can:assign,customer');
         Route::post('/admin/customers/reengage/bulk', [CustomerController::class, 'reengageBulk'])

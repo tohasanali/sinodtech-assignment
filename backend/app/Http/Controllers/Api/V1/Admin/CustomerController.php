@@ -5,19 +5,57 @@ namespace App\Http\Controllers\Api\V1\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AssignCustomerRequest;
 use App\Http\Requests\ReengageBulkRequest;
+use App\Http\Requests\StoreCustomerRequest;
+use App\Http\Requests\UpdateCustomerRequest;
 use App\Http\Resources\CustomerResource;
 use App\Models\Customer;
 use App\Notifications\CustomerReengagementNotification;
+use App\Support\ApiResponse;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class CustomerController extends Controller
 {
+    public function index(): JsonResponse
+    {
+        return CustomerResource::collection(Customer::orderBy('name')->get())->response();
+    }
+
+    public function store(StoreCustomerRequest $request): JsonResponse
+    {
+        $customer = Customer::create($request->validated());
+
+        return (new CustomerResource($customer))->response()->setStatusCode(201);
+    }
+
     public function show(Customer $customer): JsonResponse
     {
         $customer->load(['sales.items.product', 'sales.branch', 'sales.user', 'employee']);
 
         return (new CustomerResource($customer))->response();
+    }
+
+    public function update(UpdateCustomerRequest $request, Customer $customer): JsonResponse
+    {
+        $customer->update($request->validated());
+
+        return (new CustomerResource($customer))->response();
+    }
+
+    public function destroy(Customer $customer): JsonResponse
+    {
+        try {
+            $customer->delete();
+        } catch (QueryException $e) {
+            return ApiResponse::error(
+                'customer_has_related_records',
+                'Cannot delete a customer with KPI history.',
+                409,
+            );
+        }
+
+        return response()->json(null, 204);
     }
 
     public function lost(Request $request): JsonResponse
