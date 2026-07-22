@@ -39,6 +39,11 @@ class User extends Authenticatable
         return $this->role === UserRole::Admin;
     }
 
+    public function isStaff(): bool
+    {
+        return in_array($this->role, [UserRole::Admin, UserRole::Employee], true);
+    }
+
     public function sales(): HasMany
     {
         return $this->hasMany(Sale::class);

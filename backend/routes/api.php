@@ -1,11 +1,13 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Api\V1\Admin\SaleController;
 use App\Http\Controllers\Api\V1\Admin\StockController;
 use App\Http\Controllers\Api\V1\Admin\UserController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Public\ProductController as PublicProductController;
 use App\Models\Product;
+use App\Models\Sale;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
@@ -47,6 +49,9 @@ Route::prefix('v1')->group(function () {
 
         Route::patch('/admin/products/{product}/branches/{branch}/stock', [StockController::class, 'adjust'])
             ->middleware('can:update,product');
+
+        Route::post('/admin/sales', [SaleController::class, 'store'])
+            ->middleware('can:create,'.Sale::class);
     });
 
     // "Public" = third-party e-commerce consumers, not unauthenticated access — scoped
