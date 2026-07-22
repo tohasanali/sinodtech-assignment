@@ -56,7 +56,7 @@ class SaleService
     }
 
     /**
-     * Same lost-customer definition Step 9 formalizes into a reusable
+     * Same lost-customer definition that will be formalized into a reusable
      * Customer query scope: at least one prior purchase, and the most recent
      * one older than the configured threshold.
      */

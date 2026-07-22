@@ -30,6 +30,10 @@ class UserSeeder extends Seeder
             'role' => UserRole::Employee,
         ]);
 
+        // A handful more employees so CRM assignment has more than one seat to
+        // distribute lost customers across.
+        User::factory()->count(4)->create(['role' => UserRole::Employee]);
+
         $apiConsumer = User::factory()->create([
             'name' => 'E-Commerce API Consumer',
             'email' => 'api-consumer@sinodtech.test',
