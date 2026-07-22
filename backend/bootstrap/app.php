@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\InsufficientStockException;
 use App\Support\ApiResponse;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
@@ -49,6 +50,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(function (AuthenticationException $e, Request $request) {
             return ApiResponse::error('unauthenticated', $e->getMessage(), 401);
+        });
+
+        $exceptions->render(function (InsufficientStockException $e, Request $request) {
+            return ApiResponse::error('insufficient_stock', $e->getMessage(), 422);
         });
 
         $exceptions->render(function (AccessDeniedHttpException $e, Request $request) {

@@ -1,8 +1,11 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Api\V1\Admin\StockController;
 use App\Http\Controllers\Api\V1\Admin\UserController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
-use App\Http\Controllers\Api\V1\Public\ProductController;
+use App\Http\Controllers\Api\V1\Public\ProductController as PublicProductController;
+use App\Models\Product;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
@@ -26,10 +29,28 @@ Route::prefix('v1')->group(function () {
 
         Route::get('/admin/users', [UserController::class, 'index'])
             ->middleware('can:viewAny,'.User::class);
+
+        // Individual routes, not Route::apiResource(): each action needs a different policy
+        // ability, and authorizeResource() (which maps those automatically) needs
+        // Illuminate\Routing\Controller's $this->middleware(), which our bare Controller
+        // base class intentionally doesn't extend.
+        Route::get('/admin/products', [AdminProductController::class, 'index'])
+            ->middleware('can:viewAny,'.Product::class);
+        Route::post('/admin/products', [AdminProductController::class, 'store'])
+            ->middleware('can:create,'.Product::class);
+        Route::get('/admin/products/{product}', [AdminProductController::class, 'show'])
+            ->middleware('can:view,product');
+        Route::match(['put', 'patch'], '/admin/products/{product}', [AdminProductController::class, 'update'])
+            ->middleware('can:update,product');
+        Route::delete('/admin/products/{product}', [AdminProductController::class, 'destroy'])
+            ->middleware('can:delete,product');
+
+        Route::patch('/admin/products/{product}/branches/{branch}/stock', [StockController::class, 'adjust'])
+            ->middleware('can:update,product');
     });
 
     // "Public" = third-party e-commerce consumers, not unauthenticated access — scoped
     // tokens exist so a specific partner can be identified, throttled, and revoked.
-    Route::get('/public/products', [ProductController::class, 'index'])
+    Route::get('/public/products', [PublicProductController::class, 'index'])
         ->middleware(['auth:sanctum', 'ability:products:read']);
 });

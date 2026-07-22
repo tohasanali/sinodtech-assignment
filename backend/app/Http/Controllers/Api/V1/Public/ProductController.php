@@ -3,19 +3,36 @@
 namespace App\Http\Controllers\Api\V1\Public;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\JsonResponse;
+use App\Http\Resources\PublicProductResource;
+use App\Models\Branch;
+use App\Models\Product;
+use App\Services\StockService;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ProductController extends Controller
 {
     /**
-     * Placeholder response proving the `products:read`-scoped Sanctum token
-     * reaches a real, ability-gated route. Will be replaced with real
-     * StockService-backed data behind a proper API Resource.
+     * List products for third-party e-commerce consumption: SKU, name, price,
+     * and available stock only. Stock is aggregated across all branches by
+     * default; pass `branch_id` to scope it to a single branch instead.
      */
-    public function index(): JsonResponse
+    public function index(Request $request, StockService $stockService): AnonymousResourceCollection
     {
-        return response()->json(['data' => [
-            ['sku' => 'DEMO-001', 'name' => 'Demo Product', 'price' => 19.99, 'stock' => 42],
-        ]]);
+        $validated = $request->validate([
+            'branch_id' => ['sometimes', 'integer', 'exists:branches,id'],
+        ]);
+
+        $branch = isset($validated['branch_id']) ? Branch::find($validated['branch_id']) : null;
+
+        $products = Product::orderBy('name')->get();
+
+        $products->each(function (Product $product) use ($stockService, $branch) {
+            $product->available_stock = $branch
+                ? $stockService->quantityForBranch($product, $branch)
+                : $stockService->totalQuantity($product);
+        });
+
+        return PublicProductResource::collection($products);
     }
 }
