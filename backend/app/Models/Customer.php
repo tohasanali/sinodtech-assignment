@@ -9,13 +9,24 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Notifications\Notifiable;
 
 class Customer extends Model
 {
     /** @use HasFactory<CustomerFactory> */
-    use HasFactory;
+    use HasFactory, Notifiable;
 
-    protected $fillable = ['name', 'email', 'phone', 'employee_id'];
+    protected $fillable = ['name', 'email', 'phone', 'employee_id', 'last_contacted_at'];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'last_contacted_at' => 'datetime',
+        ];
+    }
 
     public function sales(): HasMany
     {

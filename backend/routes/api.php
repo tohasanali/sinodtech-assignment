@@ -63,6 +63,10 @@ Route::prefix('v1')->group(function () {
             ->middleware('can:view,customer');
         Route::patch('/admin/customers/{customer}/assign', [CustomerController::class, 'assign'])
             ->middleware('can:assign,customer');
+        Route::post('/admin/customers/reengage/bulk', [CustomerController::class, 'reengageBulk'])
+            ->middleware('can:reengageAny,'.Customer::class);
+        Route::post('/admin/customers/{customer}/reengage', [CustomerController::class, 'reengage'])
+            ->middleware('can:reengage,customer');
 
         Route::get('/admin/employees/kpi', [EmployeeController::class, 'kpi'])
             ->middleware('can:viewAny,'.EmployeeKpi::class);

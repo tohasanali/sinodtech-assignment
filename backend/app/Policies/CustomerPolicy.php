@@ -21,4 +21,14 @@ class CustomerPolicy
     {
         return $user->isAdmin();
     }
+
+    public function reengage(User $user, Customer $customer): bool
+    {
+        return $user->isAdmin();
+    }
+
+    public function reengageAny(User $user): bool
+    {
+        return $user->isAdmin();
+    }
 }
