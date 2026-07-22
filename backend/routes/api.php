@@ -1,11 +1,15 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin\CustomerController;
+use App\Http\Controllers\Api\V1\Admin\EmployeeController;
 use App\Http\Controllers\Api\V1\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Api\V1\Admin\SaleController;
 use App\Http\Controllers\Api\V1\Admin\StockController;
 use App\Http\Controllers\Api\V1\Admin\UserController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Public\ProductController as PublicProductController;
+use App\Models\Customer;
+use App\Models\EmployeeKpi;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
@@ -52,6 +56,16 @@ Route::prefix('v1')->group(function () {
 
         Route::post('/admin/sales', [SaleController::class, 'store'])
             ->middleware('can:create,'.Sale::class);
+
+        Route::get('/admin/customers/lost', [CustomerController::class, 'lost'])
+            ->middleware('can:viewAny,'.Customer::class);
+        Route::get('/admin/customers/{customer}', [CustomerController::class, 'show'])
+            ->middleware('can:view,customer');
+        Route::patch('/admin/customers/{customer}/assign', [CustomerController::class, 'assign'])
+            ->middleware('can:assign,customer');
+
+        Route::get('/admin/employees/kpi', [EmployeeController::class, 'kpi'])
+            ->middleware('can:viewAny,'.EmployeeKpi::class);
     });
 
     // "Public" = third-party e-commerce consumers, not unauthenticated access — scoped

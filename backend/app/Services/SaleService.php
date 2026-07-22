@@ -9,7 +9,6 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class SaleService
@@ -23,7 +22,7 @@ class SaleService
     {
         // Computed before any insert: checking recency after the sale exists
         // would let the new sale satisfy its own "has a recent purchase" check.
-        $wasLost = $this->customerWasLost($customer);
+        $wasLost = $customer?->isLost() ?? false;
 
         $sale = DB::transaction(function () use ($branch, $customer, $user, $items) {
             $sale = Sale::create([
@@ -53,25 +52,5 @@ class SaleService
         event(new SaleCreated($sale, $wasLost));
 
         return $sale;
-    }
-
-    /**
-     * Same lost-customer definition that will be formalized into a reusable
-     * Customer query scope: at least one prior purchase, and the most recent
-     * one older than the configured threshold.
-     */
-    private function customerWasLost(?Customer $customer): bool
-    {
-        if (! $customer) {
-            return false;
-        }
-
-        $lastPurchaseAt = $customer->sales()->max('created_at');
-
-        if (! $lastPurchaseAt) {
-            return false;
-        }
-
-        return Carbon::parse($lastPurchaseAt)->lt(now()->subDays(config('crm.lost_customer_days')));
     }
 }
