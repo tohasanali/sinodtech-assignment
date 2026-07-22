@@ -54,6 +54,8 @@ Route::prefix('v1')->group(function () {
         Route::patch('/admin/products/{product}/branches/{branch}/stock', [StockController::class, 'adjust'])
             ->middleware('can:update,product');
 
+        Route::get('/admin/sales', [SaleController::class, 'index'])
+            ->middleware('can:viewAny,'.Sale::class);
         Route::post('/admin/sales', [SaleController::class, 'store'])
             ->middleware('can:create,'.Sale::class);
 

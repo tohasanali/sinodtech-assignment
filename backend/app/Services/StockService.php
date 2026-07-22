@@ -50,7 +50,7 @@ class StockService
 
             if ($newQuantity < 0) {
                 throw new InsufficientStockException(
-                    "Insufficient stock for product [{$product->id}] at branch [{$branch->id}]: ".
+                    "Insufficient stock for product [{$product->name}] at branch [{$branch->name}]: ".
                     "has {$currentQuantity} available, requested ".abs($delta)
                 );
             }

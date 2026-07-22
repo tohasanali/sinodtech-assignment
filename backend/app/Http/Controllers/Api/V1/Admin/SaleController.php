@@ -7,11 +7,24 @@ use App\Http\Requests\StoreSaleRequest;
 use App\Http\Resources\SaleResource;
 use App\Models\Branch;
 use App\Models\Customer;
+use App\Models\Sale;
 use App\Services\SaleService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class SaleController extends Controller
 {
+    public function index(Request $request): AnonymousResourceCollection
+    {
+        $sales = Sale::with(['branch', 'customer', 'user', 'items.product'])
+            ->when($request->filled('branch_id'), fn ($q) => $q->where('branch_id', $request->integer('branch_id')))
+            ->latest()
+            ->get();
+
+        return SaleResource::collection($sales);
+    }
+
     public function store(StoreSaleRequest $request, SaleService $saleService): JsonResponse
     {
         $branch = Branch::findOrFail($request->validated('branch_id'));
