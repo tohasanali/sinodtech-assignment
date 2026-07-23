@@ -6,6 +6,7 @@ import dashboardRoutes from './features/dashboard/routes'
 import productRoutes from './features/products/routes'
 import saleRoutes from './features/sales/routes'
 import customerRoutes from './features/customers/routes'
+import crmRoutes from './features/crm/routes'
 
 const router = createBrowserRouter([
   ...authRoutes,
@@ -14,7 +15,7 @@ const router = createBrowserRouter([
     children: [
       {
         element: <Layout />,
-        children: [...dashboardRoutes, ...productRoutes, ...saleRoutes, ...customerRoutes],
+        children: [...dashboardRoutes, ...productRoutes, ...saleRoutes, ...customerRoutes, ...crmRoutes],
       },
     ],
   },

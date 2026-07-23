@@ -12,12 +12,15 @@ const NAV_LINKS = [
   { to: '/', label: 'Dashboard', end: true },
   { to: '/products', label: 'Products' },
   { to: '/customers', label: 'Customers' },
+  { to: '/customers/lost', label: 'Lost Customers', adminOnly: true },
   { to: '/sales/new', label: 'New Sale' },
   { to: '/sales', label: 'Sales History' },
+  { to: '/employees/kpi', label: 'KPI', adminOnly: true },
 ]
 
 export default function Layout() {
   const { user, logout } = useAuth()
+  const navLinks = NAV_LINKS.filter((link) => !link.adminOnly || user.role === 'admin')
 
   return (
     <div>
@@ -36,7 +39,7 @@ export default function Layout() {
               </div>
             </div>
             <nav className="flex items-center gap-1 text-sm font-medium text-slate-600 dark:text-slate-300">
-              {NAV_LINKS.map((link) => (
+              {navLinks.map((link) => (
                 <NavLink
                   key={link.to}
                   to={link.to}

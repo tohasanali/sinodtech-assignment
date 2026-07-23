@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext'
 import { createCustomer, deleteCustomer, listCustomers, updateCustomer } from '../../api/customers'
 import { Button, EmptyState } from '../../components/ui'
 import CustomerForm from './CustomerForm'
+import CustomerPurchaseHistory from './CustomerPurchaseHistory'
 
 export default function CustomerCatalog() {
   const { user } = useAuth()
@@ -11,6 +12,7 @@ export default function CustomerCatalog() {
   const [state, setState] = useState({ status: 'loading' })
   const [creating, setCreating] = useState(false)
   const [editingId, setEditingId] = useState(null)
+  const [viewingHistoryId, setViewingHistoryId] = useState(null)
 
   function loadCustomers() {
     setState({ status: 'loading' })
@@ -47,6 +49,16 @@ export default function CustomerCatalog() {
       const apiError = err.response?.data?.error
       window.alert(apiError?.message ?? 'Could not delete customer.')
     }
+  }
+
+  function toggleEditing(customerId) {
+    setViewingHistoryId(null)
+    setEditingId((prev) => (prev === customerId ? null : customerId))
+  }
+
+  function toggleHistory(customerId) {
+    setEditingId(null)
+    setViewingHistoryId((prev) => (prev === customerId ? null : customerId))
   }
 
   return (
@@ -98,10 +110,10 @@ export default function CustomerCatalog() {
                     </td>
                     {isAdmin && (
                       <td className="space-x-3 px-4 py-3">
-                        <Button
-                          variant="link"
-                          onClick={() => setEditingId(editingId === customer.id ? null : customer.id)}
-                        >
+                        <Button variant="link" onClick={() => toggleHistory(customer.id)}>
+                          History
+                        </Button>
+                        <Button variant="link" onClick={() => toggleEditing(customer.id)}>
                           Edit
                         </Button>
                         <Button variant="danger" onClick={() => handleDelete(customer)}>
@@ -123,6 +135,13 @@ export default function CustomerCatalog() {
                           onSubmit={(payload) => handleUpdate(customer.id, payload)}
                           onCancel={() => setEditingId(null)}
                         />
+                      </td>
+                    </tr>
+                  )}
+                  {viewingHistoryId === customer.id && (
+                    <tr>
+                      <td colSpan={isAdmin ? 5 : 4} className="px-4 py-3">
+                        <CustomerPurchaseHistory customerId={customer.id} />
                       </td>
                     </tr>
                   )}

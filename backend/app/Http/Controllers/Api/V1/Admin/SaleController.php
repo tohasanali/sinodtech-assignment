@@ -19,6 +19,7 @@ class SaleController extends Controller
     {
         $sales = Sale::with(['branch', 'customer', 'user', 'items.product'])
             ->when($request->filled('branch_id'), fn ($q) => $q->where('branch_id', $request->integer('branch_id')))
+            ->when(! $request->user()->isAdmin(), fn ($q) => $q->where('user_id', $request->user()->id))
             ->latest()
             ->get();
 

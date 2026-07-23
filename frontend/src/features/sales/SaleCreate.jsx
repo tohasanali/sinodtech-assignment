@@ -237,8 +237,9 @@ export default function SaleCreate() {
                           type="number"
                           min="1"
                           value={line.quantity}
+                          disabled={submitting}
                           onChange={(event) => updateLineQuantity(line.product_id, Number(event.target.value))}
-                          className="w-20 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                          className="w-20 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                         />
                       </td>
                       <td className="py-2 text-slate-600 dark:text-slate-400">
