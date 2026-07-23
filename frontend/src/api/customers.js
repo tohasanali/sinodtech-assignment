@@ -43,6 +43,13 @@ export async function reengageCustomer(id) {
   return response.data.data
 }
 
+export async function listMyCustomers({ lostOnly } = {}) {
+  const response = await apiClient.get('/api/v1/employee/customers', {
+    params: lostOnly ? { lost_only: 1 } : undefined,
+  })
+  return response.data.data
+}
+
 export async function reengageBulk({ customerIds } = {}) {
   const response = await apiClient.post('/api/v1/admin/customers/reengage/bulk', {
     customer_ids: customerIds,

@@ -58,4 +58,10 @@ class Customer extends Model
         return $lastPurchaseAt !== null
             && Carbon::parse($lastPurchaseAt)->lt(now()->subDays(config('crm.lost_customer_days')));
     }
+
+    public function wasRecentlyContacted(): bool
+    {
+        return $this->last_contacted_at !== null
+            && $this->last_contacted_at->gt(now()->subDays(config('crm.recontact_cooldown_days')));
+    }
 }

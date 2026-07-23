@@ -13,6 +13,7 @@ const NAV_LINKS = [
   { to: '/products', label: 'Products' },
   { to: '/customers', label: 'Customers' },
   { to: '/customers/lost', label: 'Lost Customers', adminOnly: true },
+  { to: '/customers/mine', label: 'My Customers', employeeOnly: true },
   { to: '/sales/new', label: 'New Sale' },
   { to: '/sales', label: 'Sales History' },
   { to: '/employees/kpi', label: 'KPI', adminOnly: true },
@@ -20,7 +21,15 @@ const NAV_LINKS = [
 
 export default function Layout() {
   const { user, logout } = useAuth()
-  const navLinks = NAV_LINKS.filter((link) => !link.adminOnly || user.role === 'admin')
+  const navLinks = NAV_LINKS.filter((link) => {
+    if (link.adminOnly) {
+      return user.role === 'admin'
+    }
+    if (link.employeeOnly) {
+      return user.role === 'employee'
+    }
+    return true
+  })
 
   return (
     <div>

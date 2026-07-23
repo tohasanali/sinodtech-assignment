@@ -39,7 +39,7 @@ class CustomerPolicy
 
     public function reengage(User $user, Customer $customer): bool
     {
-        return $user->isAdmin();
+        return $user->isAdmin() || $customer->employee_id === $user->id;
     }
 
     public function reengageAny(User $user): bool

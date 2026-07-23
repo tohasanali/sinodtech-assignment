@@ -19,6 +19,8 @@ class CustomerResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'phone' => $this->phone,
+            'is_lost' => $this->isLost(),
+            'recently_contacted' => $this->wasRecentlyContacted(),
             'employee' => $this->whenLoaded('employee', fn () => $this->employee ? [
                 'id' => $this->employee->id,
                 'name' => $this->employee->name,

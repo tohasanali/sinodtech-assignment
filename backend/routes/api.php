@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\Admin\SaleController;
 use App\Http\Controllers\Api\V1\Admin\StockController;
 use App\Http\Controllers\Api\V1\Admin\UserController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
+use App\Http\Controllers\Api\V1\Employee\CustomerController as EmployeeCustomerController;
 use App\Http\Controllers\Api\V1\Public\ProductController as PublicProductController;
 use App\Models\Branch;
 use App\Models\Customer;
@@ -85,6 +86,9 @@ Route::prefix('v1')->group(function () {
 
         Route::get('/admin/employees/kpi', [EmployeeController::class, 'kpi'])
             ->middleware('can:viewAny,'.EmployeeKpi::class);
+
+        Route::get('/employee/customers', [EmployeeCustomerController::class, 'index'])
+            ->middleware('can:viewAny,'.Customer::class);
     });
 
     // "Public" = third-party e-commerce consumers, not unauthenticated access — scoped

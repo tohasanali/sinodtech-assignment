@@ -17,7 +17,7 @@ class SendCustomerReengagementNotifications extends Command
     {
         $customers = Customer::lost()
             ->where(fn (Builder $query) => $query->whereNull('last_contacted_at')
-                ->orWhere('last_contacted_at', '<', now()->subDays(7)))
+                ->orWhere('last_contacted_at', '<', now()->subDays(config('crm.recontact_cooldown_days'))))
             ->get();
 
         $customers->each(function (Customer $customer) {

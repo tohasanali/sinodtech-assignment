@@ -43,6 +43,8 @@ export default function LostCustomerRow({ customer, employees, onAssigned, selec
     }
   }
 
+  const alreadyContacted = reengaged || customer.recently_contacted
+
   return (
     <tr className="border-b border-slate-100 last:border-0 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50">
       <td className="px-4 py-3 align-top">
@@ -85,8 +87,8 @@ export default function LostCustomerRow({ customer, employees, onAssigned, selec
         )}
       </td>
       <td className="px-4 py-3 align-top">
-        <Button variant="secondary" disabled={reengaging || reengaged} onClick={handleReengage}>
-          {reengaged ? 'Re-engaged ✓' : reengaging ? 'Sending...' : 'Re-engage'}
+        <Button variant="secondary" disabled={reengaging || alreadyContacted} onClick={handleReengage}>
+          {reengaging ? 'Sending...' : alreadyContacted ? 'Recently contacted' : 'Re-engage'}
         </Button>
         {reengageError && (
           <Alert variant="error" className="mt-2">
