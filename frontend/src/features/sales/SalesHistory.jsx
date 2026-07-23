@@ -1,11 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useAuth } from '../../context/AuthContext'
 import { listSales } from '../../api/sales'
 import { Card, EmptyState } from '../../components/ui'
 
 export default function SalesHistory() {
+  const { user, activeBranchId } = useAuth()
+  const isAdmin = user.role === 'admin'
+
   const [allSales, setAllSales] = useState([])
   const [branchFilter, setBranchFilter] = useState('')
   const [salesState, setSalesState] = useState({ status: 'loading' })
+
+  const activeBranchName = useMemo(
+    () => (user.branches ?? []).find((branch) => branch.id === activeBranchId)?.name,
+    [user.branches, activeBranchId],
+  )
 
   // One-time unfiltered fetch so the branch dropdown stays stable even once a filter narrows the list below.
   useEffect(() => {
@@ -32,24 +41,30 @@ export default function SalesHistory() {
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Sales history</h2>
 
-        <div>
-          <label htmlFor="branch-filter" className="sr-only">
-            Filter by branch
-          </label>
-          <select
-            id="branch-filter"
-            value={branchFilter}
-            onChange={(event) => setBranchFilter(event.target.value)}
-            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-          >
-            <option value="">All branches</option>
-            {branches.map((branch) => (
-              <option key={branch.id} value={branch.id}>
-                {branch.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        {isAdmin ? (
+          <div>
+            <label htmlFor="branch-filter" className="sr-only">
+              Filter by branch
+            </label>
+            <select
+              id="branch-filter"
+              value={branchFilter}
+              onChange={(event) => setBranchFilter(event.target.value)}
+              className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            >
+              <option value="">All branches</option>
+              {branches.map((branch) => (
+                <option key={branch.id} value={branch.id}>
+                  {branch.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          activeBranchName && (
+            <span className="text-sm text-slate-500 dark:text-slate-400">Branch: {activeBranchName}</span>
+          )
+        )}
       </div>
 
       {salesState.status === 'loading' && (

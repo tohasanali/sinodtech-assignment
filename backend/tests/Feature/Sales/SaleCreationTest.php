@@ -32,6 +32,11 @@ class SaleCreationTest extends TestCase
         return User::factory()->create(['role' => UserRole::Employee]);
     }
 
+    private function admin(): User
+    {
+        return User::factory()->create(['role' => UserRole::Admin]);
+    }
+
     public function test_employee_can_record_a_sale_with_sufficient_stock(): void
     {
         $employee = $this->employee();
@@ -39,12 +44,14 @@ class SaleCreationTest extends TestCase
         $product = Product::factory()->create();
         BranchStock::factory()->create(['branch_id' => $branch->id, 'product_id' => $product->id, 'quantity' => 50]);
 
-        $response = $this->actingAs($employee)->postJson('/api/v1/admin/sales', [
-            'branch_id' => $branch->id,
-            'items' => [
-                ['product_id' => $product->id, 'quantity' => 5],
-            ],
-        ]);
+        $response = $this->actingAs($employee)
+            ->withHeader('Referer', env('FRONTEND_URL', 'http://localhost:8001'))
+            ->withSession(['active_branch_id' => $branch->id])
+            ->postJson('/api/v1/admin/sales', [
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 5],
+                ],
+            ]);
 
         $response->assertCreated();
         $response->assertJsonPath('data.items.0.quantity', 5);
@@ -67,12 +74,14 @@ class SaleCreationTest extends TestCase
         $product = Product::factory()->create();
         BranchStock::factory()->create(['branch_id' => $branch->id, 'product_id' => $product->id, 'quantity' => 10]);
 
-        $response = $this->actingAs($this->employee())->postJson('/api/v1/admin/sales', [
-            'branch_id' => $branch->id,
-            'items' => [
-                ['product_id' => $product->id, 'quantity' => 1],
-            ],
-        ]);
+        $response = $this->actingAs($this->employee())
+            ->withHeader('Referer', env('FRONTEND_URL', 'http://localhost:8001'))
+            ->withSession(['active_branch_id' => $branch->id])
+            ->postJson('/api/v1/admin/sales', [
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 1],
+                ],
+            ]);
 
         $response->assertCreated();
         $response->assertJsonPath('data.customer', null);
@@ -85,13 +94,15 @@ class SaleCreationTest extends TestCase
         $customer = Customer::factory()->create();
         BranchStock::factory()->create(['branch_id' => $branch->id, 'product_id' => $product->id, 'quantity' => 10]);
 
-        $response = $this->actingAs($this->employee())->postJson('/api/v1/admin/sales', [
-            'branch_id' => $branch->id,
-            'customer_id' => $customer->id,
-            'items' => [
-                ['product_id' => $product->id, 'quantity' => 1],
-            ],
-        ]);
+        $response = $this->actingAs($this->employee())
+            ->withHeader('Referer', env('FRONTEND_URL', 'http://localhost:8001'))
+            ->withSession(['active_branch_id' => $branch->id])
+            ->postJson('/api/v1/admin/sales', [
+                'customer_id' => $customer->id,
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 1],
+                ],
+            ]);
 
         $response->assertCreated();
         $response->assertJsonPath('data.customer.id', $customer->id);
@@ -104,12 +115,14 @@ class SaleCreationTest extends TestCase
         $product = Product::factory()->create();
         BranchStock::factory()->create(['branch_id' => $branch->id, 'product_id' => $product->id, 'quantity' => 3]);
 
-        $response = $this->actingAs($this->employee())->postJson('/api/v1/admin/sales', [
-            'branch_id' => $branch->id,
-            'items' => [
-                ['product_id' => $product->id, 'quantity' => 10],
-            ],
-        ]);
+        $response = $this->actingAs($this->employee())
+            ->withHeader('Referer', env('FRONTEND_URL', 'http://localhost:8001'))
+            ->withSession(['active_branch_id' => $branch->id])
+            ->postJson('/api/v1/admin/sales', [
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 10],
+                ],
+            ]);
 
         $response->assertStatus(422);
         $response->assertJsonPath('error.code', 'insufficient_stock');
@@ -128,19 +141,36 @@ class SaleCreationTest extends TestCase
         $product = Product::factory()->create();
         // No branch_stocks row at all for this branch/product pair.
 
-        $response = $this->actingAs($this->employee())->postJson('/api/v1/admin/sales', [
-            'branch_id' => $branch->id,
-            'items' => [
-                ['product_id' => $product->id, 'quantity' => 1],
-            ],
-        ]);
+        $response = $this->actingAs($this->employee())
+            ->withHeader('Referer', env('FRONTEND_URL', 'http://localhost:8001'))
+            ->withSession(['active_branch_id' => $branch->id])
+            ->postJson('/api/v1/admin/sales', [
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 1],
+                ],
+            ]);
 
         $response->assertStatus(422);
         $response->assertJsonPath('error.code', 'insufficient_stock');
         $this->assertSame(0, Sale::count());
     }
 
-    public function test_missing_branch_id_fails_validation(): void
+    public function test_missing_branch_id_fails_validation_for_admin(): void
+    {
+        $product = Product::factory()->create();
+
+        $response = $this->actingAs($this->admin())->postJson('/api/v1/admin/sales', [
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1],
+            ],
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonPath('error.code', 'validation_error');
+        $response->assertJsonPath('error.errors.branch_id.0', 'The branch id field is required.');
+    }
+
+    public function test_employee_without_an_active_branch_receives_a_clear_error(): void
     {
         $product = Product::factory()->create();
 
@@ -151,8 +181,29 @@ class SaleCreationTest extends TestCase
         ]);
 
         $response->assertStatus(422);
-        $response->assertJsonPath('error.code', 'validation_error');
-        $response->assertJsonPath('error.errors.branch_id.0', 'The branch id field is required.');
+        $response->assertJsonPath('error.code', 'no_active_branch');
+    }
+
+    public function test_employee_branch_id_mismatch_with_active_branch_is_rejected(): void
+    {
+        $activeBranch = Branch::factory()->create();
+        $otherBranch = Branch::factory()->create();
+        $product = Product::factory()->create();
+        BranchStock::factory()->create(['branch_id' => $otherBranch->id, 'product_id' => $product->id, 'quantity' => 10]);
+
+        $response = $this->actingAs($this->employee())
+            ->withHeader('Referer', env('FRONTEND_URL', 'http://localhost:8001'))
+            ->withSession(['active_branch_id' => $activeBranch->id])
+            ->postJson('/api/v1/admin/sales', [
+                'branch_id' => $otherBranch->id,
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 1],
+                ],
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonPath('error.code', 'branch_mismatch');
+        $this->assertSame(0, Sale::count());
     }
 
     public function test_empty_items_array_fails_validation(): void

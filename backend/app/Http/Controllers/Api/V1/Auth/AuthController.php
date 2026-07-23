@@ -34,7 +34,10 @@ class AuthController extends Controller
         Auth::guard('web')->login($user);
         $request->session()->regenerate();
 
-        return response()->json(['user' => $user], 201);
+        return response()->json([
+            'user' => $user->load('branches'),
+            'active_branch_id' => $request->session()->get('active_branch_id'),
+        ], 201);
     }
 
     public function login(Request $request): JsonResponse
@@ -52,7 +55,10 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
-        return response()->json(['user' => Auth::guard('web')->user()]);
+        return response()->json([
+            'user' => Auth::guard('web')->user()->load('branches'),
+            'active_branch_id' => $request->session()->get('active_branch_id'),
+        ]);
     }
 
     public function logout(Request $request): JsonResponse
@@ -67,6 +73,9 @@ class AuthController extends Controller
 
     public function user(Request $request): JsonResponse
     {
-        return response()->json(['user' => $request->user()]);
+        return response()->json([
+            'user' => $request->user()->load('branches'),
+            'active_branch_id' => $request->session()->get('active_branch_id'),
+        ]);
     }
 }

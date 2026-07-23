@@ -27,4 +27,9 @@ class Branch extends Model
             ->withPivot('quantity')
             ->withTimestamps();
     }
+
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'user_branches')->withTimestamps();
+    }
 }

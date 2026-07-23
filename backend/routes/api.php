@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\Admin\SaleController;
 use App\Http\Controllers\Api\V1\Admin\StockController;
 use App\Http\Controllers\Api\V1\Admin\UserController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
+use App\Http\Controllers\Api\V1\Auth\SessionController;
 use App\Http\Controllers\Api\V1\Employee\CustomerController as EmployeeCustomerController;
 use App\Http\Controllers\Api\V1\Public\ProductController as PublicProductController;
 use App\Models\Branch;
@@ -35,6 +36,7 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/user', [AuthController::class, 'user']);
+        Route::post('/session/branch', [SessionController::class, 'setActiveBranch']);
 
         Route::get('/admin/users', [UserController::class, 'index'])
             ->middleware('can:viewAny,'.User::class);

@@ -8,14 +8,21 @@ use App\Http\Requests\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ProductController extends Controller
 {
-    public function index(): AnonymousResourceCollection
+    public function index(Request $request): AnonymousResourceCollection
     {
+        $branchId = $request->filled('branch_id')
+            ? $request->integer('branch_id')
+            : (! $request->user()->isAdmin() && $request->hasSession() ? $request->session()->get('active_branch_id') : null);
+
         return ProductResource::collection(
-            Product::with('branchStocks.branch')->orderBy('name')->get()
+            Product::with(['branchStocks' => fn ($q) => $q->with('branch')->when($branchId, fn ($q2) => $q2->where('branch_id', $branchId))])
+                ->orderBy('name')
+                ->get()
         );
     }
 

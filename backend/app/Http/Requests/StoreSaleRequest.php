@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreSaleRequest extends FormRequest
 {
@@ -24,7 +25,10 @@ class StoreSaleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'branch_id' => ['required', 'integer', 'exists:branches,id'],
+            // Admins must pick a branch manually; employees use their active session
+            // branch instead (validated separately in the controller), so branch_id is
+            // only required-by-validation for admins here.
+            'branch_id' => [Rule::requiredIf(fn () => $this->user()->isAdmin()), 'nullable', 'integer', 'exists:branches,id'],
             'customer_id' => ['nullable', 'integer', 'exists:customers,id'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'integer', 'exists:products,id'],

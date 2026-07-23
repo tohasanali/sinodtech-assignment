@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useAuth } from '../../context/AuthContext'
 import { listProducts } from '../../api/products'
 import { listCustomers } from '../../api/customers'
 import { createSale } from '../../api/sales'
 import { Alert, Button, Card, EmptyState, Field } from '../../components/ui'
 
 export default function SaleCreate() {
+  const { user, activeBranchId } = useAuth()
+  const isAdmin = user.role === 'admin'
+
   const [productsState, setProductsState] = useState({ status: 'loading' })
   const [customers, setCustomers] = useState([])
   const [branchId, setBranchId] = useState('')
@@ -15,6 +19,8 @@ export default function SaleCreate() {
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState(null)
   const [submitSuccess, setSubmitSuccess] = useState(null)
+
+  const effectiveBranchId = isAdmin ? branchId : activeBranchId
 
   useEffect(() => {
     listProducts()
@@ -41,15 +47,20 @@ export default function SaleCreate() {
     return Array.from(byId, ([id, name]) => ({ id, name }))
   }, [products])
 
+  const activeBranchName = useMemo(
+    () => (user.branches ?? []).find((branch) => branch.id === activeBranchId)?.name,
+    [user.branches, activeBranchId],
+  )
+
   const productsAtBranch = useMemo(() => {
-    if (!branchId) {
+    if (!effectiveBranchId) {
       return []
     }
     return products.map((product) => {
-      const stockEntry = product.stock.find((entry) => entry.branch_id === Number(branchId))
+      const stockEntry = product.stock.find((entry) => entry.branch_id === Number(effectiveBranchId))
       return { ...product, availableQuantity: stockEntry?.quantity ?? 0 }
     })
-  }, [products, branchId])
+  }, [products, effectiveBranchId])
 
   const total = cart.reduce((sum, line) => sum + line.unit_price * line.quantity, 0)
 
@@ -104,7 +115,7 @@ export default function SaleCreate() {
 
     try {
       const sale = await createSale({
-        branch_id: Number(branchId),
+        ...(isAdmin ? { branch_id: Number(branchId) } : {}),
         customer_id: customerId ? Number(customerId) : null,
         items: cart.map((line) => ({ product_id: line.product_id, quantity: line.quantity })),
       })
@@ -132,27 +143,40 @@ export default function SaleCreate() {
         </p>
       )}
 
-      {productsState.status === 'ok' && (
+      {productsState.status === 'ok' && !isAdmin && !activeBranchId && (
+        <Alert variant="error">Select a branch from the header first.</Alert>
+      )}
+
+      {productsState.status === 'ok' && (isAdmin || activeBranchId) && (
         <div className="space-y-6">
           <Card>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor="branch" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Branch
-                </label>
-                <select
-                  id="branch"
-                  value={branchId}
-                  onChange={(event) => handleBranchChange(event.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                >
-                  <option value="">Select a branch</option>
-                  {branches.map((branch) => (
-                    <option key={branch.id} value={branch.id}>
-                      {branch.name}
-                    </option>
-                  ))}
-                </select>
+                {isAdmin ? (
+                  <>
+                    <label htmlFor="branch" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Branch
+                    </label>
+                    <select
+                      id="branch"
+                      value={branchId}
+                      onChange={(event) => handleBranchChange(event.target.value)}
+                      className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                    >
+                      <option value="">Select a branch</option>
+                      {branches.map((branch) => (
+                        <option key={branch.id} value={branch.id}>
+                          {branch.name}
+                        </option>
+                      ))}
+                    </select>
+                  </>
+                ) : (
+                  <>
+                    <p className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Branch</p>
+                    <p className="text-sm text-slate-900 dark:text-slate-100">{activeBranchName}</p>
+                  </>
+                )}
               </div>
 
               <div>
@@ -175,7 +199,7 @@ export default function SaleCreate() {
               </div>
             </div>
 
-            {branchId && (
+            {effectiveBranchId && (
               <div className="mt-4 flex items-end gap-3">
                 <div className="flex-1">
                   <label htmlFor="product" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -284,7 +308,7 @@ export default function SaleCreate() {
             </Alert>
           )}
 
-          <Button onClick={handleSubmit} disabled={submitting || !branchId || cart.length === 0}>
+          <Button onClick={handleSubmit} disabled={submitting || !effectiveBranchId || cart.length === 0}>
             {submitting ? 'Recording sale...' : 'Record sale'}
           </Button>
         </div>

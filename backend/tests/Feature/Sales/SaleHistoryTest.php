@@ -19,12 +19,15 @@ class SaleHistoryTest extends TestCase
     {
         BranchStock::factory()->create(['branch_id' => $branch->id, 'product_id' => $product->id, 'quantity' => 10]);
 
-        $response = $this->actingAs($seller)->postJson('/api/v1/admin/sales', [
-            'branch_id' => $branch->id,
-            'items' => [
-                ['product_id' => $product->id, 'quantity' => 1],
-            ],
-        ]);
+        $response = $this->actingAs($seller)
+            ->withHeader('Referer', env('FRONTEND_URL', 'http://localhost:8001'))
+            ->withSession(['active_branch_id' => $branch->id])
+            ->postJson('/api/v1/admin/sales', [
+                'branch_id' => $branch->id,
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 1],
+                ],
+            ]);
 
         $response->assertCreated();
 
