@@ -97,4 +97,32 @@ class ActiveBranchSessionTest extends TestCase
         $response->assertJsonCount(1, 'data');
         $response->assertJsonPath('data.0.id', $saleA['id']);
     }
+
+    public function test_employee_can_switch_active_branch_and_subsequent_sale_uses_the_new_branch(): void
+    {
+        $employee = User::factory()->create(['role' => UserRole::Employee]);
+        $branchA = Branch::factory()->create();
+        $branchB = Branch::factory()->create();
+        $employee->branches()->attach([$branchA->id, $branchB->id]);
+        $productA = Product::factory()->create();
+        $productB = Product::factory()->create();
+        BranchStock::factory()->create(['branch_id' => $branchA->id, 'product_id' => $productA->id, 'quantity' => 10]);
+        BranchStock::factory()->create(['branch_id' => $branchB->id, 'product_id' => $productB->id, 'quantity' => 10]);
+        $referer = ['Referer' => env('FRONTEND_URL', 'http://localhost:8001')];
+
+        $session = $this->actingAs($employee);
+        $session->postJson('/api/v1/session/branch', ['branch_id' => $branchA->id], $referer)->assertOk();
+        $firstSale = $session->postJson('/api/v1/admin/sales', [
+            'items' => [['product_id' => $productA->id, 'quantity' => 1]],
+        ], $referer)->assertCreated()->json('data');
+
+        $this->assertSame($branchA->id, $firstSale['branch']['id']);
+
+        $session->postJson('/api/v1/session/branch', ['branch_id' => $branchB->id], $referer)->assertOk();
+        $secondSale = $session->postJson('/api/v1/admin/sales', [
+            'items' => [['product_id' => $productB->id, 'quantity' => 1]],
+        ], $referer)->assertCreated()->json('data');
+
+        $this->assertSame($branchB->id, $secondSale['branch']['id']);
+    }
 }

@@ -105,4 +105,34 @@ class StockServiceTest extends TestCase
             'quantity' => 5,
         ]);
     }
+
+    /**
+     * Simulates two overlapping adjustments — each individually fits the
+     * starting quantity, but combined would overdraw it. Proves the
+     * lockForUpdate()-guarded read-modify-write never lets the second call
+     * see and act on stale data: it's rejected against the quantity left by
+     * the first, not the original starting quantity.
+     */
+    public function test_two_sequential_adjustments_that_together_overdraw_stock_the_second_is_rejected(): void
+    {
+        $product = Product::factory()->create();
+        $branch = Branch::factory()->create();
+        BranchStock::factory()->create(['product_id' => $product->id, 'branch_id' => $branch->id, 'quantity' => 10]);
+
+        $stock = $this->stockService->adjust($product, $branch, -6);
+        $this->assertSame(4, $stock->quantity);
+
+        try {
+            $this->stockService->adjust($product, $branch, -6);
+            $this->fail('Expected InsufficientStockException was not thrown.');
+        } catch (InsufficientStockException) {
+            // expected
+        }
+
+        $this->assertDatabaseHas('branch_stocks', [
+            'product_id' => $product->id,
+            'branch_id' => $branch->id,
+            'quantity' => 4,
+        ]);
+    }
 }
